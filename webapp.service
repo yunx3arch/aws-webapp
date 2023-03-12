@@ -1,0 +1,15 @@
+[Unit]
+Description=app.js
+After=network.target
+
+[Service]
+Environment=NODE_PORT=3000
+EnvironmentFile=/etc/environment
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/code
+ExecStart=/usr/bin/node app.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
