@@ -1,0 +1,71 @@
+
+name: Web Service Continuous Integration
+
+env:
+  ARTIFACT_NAME: webapp
+  CODEDEPLOY_APPLICATION_NAME: csye6225-webapp
+  CODEDEPLOY_APPLICATION_DEPLOYMENT_GROUP: csye6225-webapp-deployment
+  AWS_REGION: us-west-2
+
+
+on:
+
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name:  run test
+        run: 
+          npm install
+          npm run test
+
+  packer:
+    runs-on: ubuntu-latest
+
+
+    steps: 
+      - name: Step 1 - Checkout code
+        uses: actions/checkout@v2
+
+      - name: Step 2 - create artifact
+        run: |
+
+          zip -r ${{ env.ARTIFACT_NAME }}.zip . --exclude=/package-lock.json/\*
+          ls -al
+
+
+      - name: Step 3 - Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Step 4 - Packer Init
+        uses: hashicorp/packer-github-actions@master
+        with:
+          command: init
+          target: us-west-2.pkr.hcl
+
+      - name: Step 5 - Validate Packer Template
+        uses: hashicorp/packer-github-actions@master
+        with:
+          command: validate
+          arguments: -syntax-only
+          target: us-west-2.pkr.hcl
+
+            
+      - name: Step 6 - Build
+        uses: hashicorp/packer-github-actions@master
+        with:
+          command: build
+          arguments: "-color=false -on-error=abort"
+          target: us-west-2.pkr.hcl
