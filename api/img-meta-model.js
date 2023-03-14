@@ -22,7 +22,11 @@ const Image_meta = sequelize.define("image-meta", {
    s3_bucket_path: {
      type: DataTypes.STRING,
      allowNull: false,
-   }
+   },
+   image_key: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 });
 
 sequelize.sync().then(() => {

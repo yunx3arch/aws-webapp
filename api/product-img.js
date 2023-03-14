@@ -5,6 +5,7 @@ const { create, getImgInfo, deleteImg } = require("./product-img-helper");
 
 
 function createImage (req, res) {
+  
     const imgInfo = req.file;
     if(!imgInfo) {
         res.status(400).json({ 
@@ -12,13 +13,13 @@ function createImage (req, res) {
         });
         return;
     }
-
     const imgMeta = {
       image_id : crypto.randomBytes(6).toString("hex"),
       product_id : req.params.id,
       file_name : imgInfo.originalname,
       date_created : new Date(),
       s3_bucket_path : imgInfo.location,
+      image_key : imgInfo.key,
     }
     
     create(imgMeta, (err, results) => {

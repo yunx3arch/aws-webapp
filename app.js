@@ -7,16 +7,25 @@ const { createImage, getImage, deleteImage } = require('./api/product-img');
 const {
     S3
 } = require("@aws-sdk/client-s3");
+
 const multer = require('multer');
 const multerS3 = require('multer-s3');
-const { deleteImg } = require('./api/product-img-helper');
+const { deleteImg, getImgInfo } = require('./api/product-img-helper');
+const util = require('util');
+
 require('dotenv').config();
 
 
+
 const s3 = new S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+
     region: process.env.REGION,
+    credentials: {
+
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+    // region: "us-west-2",
 });
 
 const jsonParser = bodyParser.json();
@@ -29,14 +38,21 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+    cb(null, true);
+  } else {
+    cb(new Error("Invalid file type, only JPEG and PNG is allowed!"), false);
+  }
+};
 
 let upload = multer({
+    fileFilter,
     storage: multerS3({
         s3: s3,
         acl: 'public-read',
         bucket: process.env.S3_BUCKET_NAME,
         key: function (req, file, cb) {
-            console.log(file);
           cb(null, Date.now().toString() + '-' + file.originalname);
         },
     })
@@ -55,34 +71,44 @@ app.delete('/v1/product/:id', deleteProduct);
 
 app.post('/v1/product/:id/image', upload.single('image'), createImage);
 app.get('/v1/product/:id/image/:imgid', getImage);
-app.delete('/v1/product/:id/image/:imgid', (req, res) => {
+app.delete('/v1/product/:id/image/:imgid', async (req, res) => {
     const imgId = req.params.imgid;
+    const getImgInfoPromise = util.promisify(getImgInfo);
 
-    const deleteParam = {
+    try{
+        const img = await getImgInfoPromise(imgId);
+        const { dataValues } = img;
+
+      console.log("imgkey", dataValues.image_key);
+
+      if (!img) {
+        return res.status(404).send({ message: 'Image not found' });
+      }
+      await s3.deleteObject({
         Bucket: process.env.S3_BUCKET_NAME,
-        Key: imgId
-  };
-  s3.deleteObject(deleteParam, (err, data) => {
+        // Bucket: "my-s3-f4dfff7e-da2f-0ec9-6590-5d28c99f1bc3",
+        Key: dataValues.image_key,
+      });
+
+      await deleteImg(imgId, (err, results) => {
         if (err) {
-              console.error(err);
-              res.status(500).send(err);
-        } else {
-              console.log('deleted');
+          console.log(err);
+          return res.status(400).json({
+            error: "bad-request",
+          });
         }
+        if (!results) {
+          return res.status(404).json({
+            error: "record-not-found",
+          });
+        }
+      })
+      return res.status(200).send({ message: 'Image deleted successfully' });
+    }catch(err){
+      console.error(err);
+      return res.status(500).send({ message: 'Something went wrong' });
+
+    }
   });
-  deleteImg(deleteParam, (err, results) => {
-      if (err) {
-        return res.status(400).json({
-          error: "bad-request",
-        });
-      }
-      if (!results) {
-        return res.status(404).json({
-          error: "record-not-found",
-        });
-      }
-      return res.status(201);
-    });
-});
 
 app.listen(PORT, () => console.log(`http://localhost:${PORT}`));

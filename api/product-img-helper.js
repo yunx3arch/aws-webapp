@@ -8,6 +8,7 @@ function create (data, callBack) {
       file_name: data.file_name,
       date_created: data.date_created,
       s3_bucket_path: data.s3_bucket_path,
+      image_key: data.image_key,
   }).then(res => {
     callBack(null, res);
   }).catch(error => {
@@ -30,7 +31,7 @@ function getImgInfo (imgId, callBack) {
 function deleteImg (params, callBack) {
       Image_meta.destroy({
             where: {
-                image_id: params.Key
+                image_id: params
             }
         }).then(res => {
             if(res == 1){
