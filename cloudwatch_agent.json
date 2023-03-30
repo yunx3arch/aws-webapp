@@ -6,9 +6,6 @@
           "region" : "us-west-2"
       },
       "logs": {
-        "credentials": {
-            "use_iam_role": "true"
-        },
           "logs_collected": {
               "files": {
                   "collect_list": [
