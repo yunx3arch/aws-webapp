@@ -43,15 +43,11 @@ wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/a
 sudo rpm -U ./amazon-cloudwatch-agent.rpm
 
 sudo cp cloudwatch_agent.json /opt/
-ls -a 
-echo "UNDER /opt "
-ls -a /opt
-echo "UNDER /"
-ls -a /
+
 
 echo "configure"
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
     -a fetch-config \
     -m ec2 \
-    -c file:/opt/cloudwatch-config.json \
+    -c file:/opt/cloudwatch-agent.json \
     -s
