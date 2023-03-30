@@ -49,5 +49,5 @@ echo "configure"
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
     -a fetch-config \
     -m ec2 \
-    -c file:/opt/cloudwatch-agent.json \
+    -c file:/opt/cloudwatch_agent.json \
     -s
