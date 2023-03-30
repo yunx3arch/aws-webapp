@@ -42,9 +42,11 @@ echo "install cloudwatch"
 wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
 sudo rpm -U ./amazon-cloudwatch-agent.rpm
 
-sudo cp cloudwatch_agent.json /opt
+sudo cp cloudwatch_agent.json /opt/
 ls -a 
+echo "UNDER /opt "
 ls -a /opt
+echo "UNDER /"
 ls -a /
 
 echo "configure"
