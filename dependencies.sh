@@ -31,12 +31,12 @@ rm package-lock.json
 npm install
 
 echo "auto run"
-# sudo mv /tmp/webapp.service /etc/systemd/system/webapp.service
-# sudo systemctl enable nginx
-# sudo systemctl start nginx
-# sudo systemctl daemon-reload
-# sudo systemctl enable webapp.service
-# sudo systemctl start webapp.service
+sudo mv /tmp/webapp.service /etc/systemd/system/webapp.service
+sudo systemctl enable nginx
+sudo systemctl start nginx
+sudo systemctl daemon-reload
+sudo systemctl enable webapp.service
+sudo systemctl start webapp.service
 
 echo "install cloudwatch"
 wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
