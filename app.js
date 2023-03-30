@@ -15,6 +15,14 @@ const util = require('util');
 
 require('dotenv').config();
 
+const Prometheus = require('prom-client');
+const register = new Prometheus.Registry();
+const http_request_counter = new Prometheus.Counter({
+  name: 'myapp_http_request_count',
+  help: 'Count of HTTP requests made to my app',
+  labelNames: ['method', 'route', 'statusCode'],
+});
+register.registerMetric(http_request_counter);
 
 
 const s3 = new S3({
@@ -22,8 +30,9 @@ const s3 = new S3({
     region: process.env.REGION,
     credentials: {
 
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      accessKeyId: process.env.AWS_ACCESS_KEY,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+
     },
     // region: "us-west-2",
 });
@@ -37,6 +46,13 @@ app.use(express.static('./public'));
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+app.use((req, res, next) =>
+{
+    // Increment the HTTP request counter
+    http_request_counter.labels({method: req.method, route: req.originalUrl, statusCode: res.statusCode}).inc();
+
+    next();
+});
 
 const fileFilter = (req, file, cb) => {
   if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
@@ -52,6 +68,7 @@ let upload = multer({
         s3: s3,
         acl: 'public-read',
         bucket: process.env.S3_BUCKET_NAME,
+        // bucket: "my-s3-f6c5e73e-9212-77f7-eac5-443f52e2375a",
         key: function (req, file, cb) {
           cb(null, Date.now().toString() + '-' + file.originalname);
         },
