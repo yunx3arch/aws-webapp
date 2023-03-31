@@ -12,7 +12,7 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 const { deleteImg, getImgInfo } = require('./api/product-img-helper');
 const util = require('util');
-const winston = require('winston');
+const fs = require('fs');
 require('dotenv').config();
 
 const Prometheus = require('prom-client');
@@ -23,13 +23,21 @@ const http_request_counter = new Prometheus.Counter({
   labelNames: ['method', 'route', 'statusCode'],
 });
 register.registerMetric(http_request_counter);
-const logger = winston.createLogger({
-  transports: [
-    new winston.transports.File({ filename: 'logs/app.log' })
-  ]
+
+
+// Create a writable stream to the log file
+const logStream = fs.createWriteStream('/var/log/webapp/csye6225.log', { flags: 'a' });
+
+// Log a message to the file
+const logger = (message) => {
+  logStream.write(`${new Date().toISOString()} - ${message}\n`);
+}
+
+// Close the stream when the application exits
+process.on('exit', () => {
+  logStream.end();
 });
-logger.info('Server started');
-logger.error('Something went wrong');
+
 
 
 const s3 = new S3({
