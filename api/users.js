@@ -1,11 +1,14 @@
 const { genSaltSync, hashSync } = require("bcrypt");
 const crypto = require("crypto");
+const logger = require("../logger");
 const { getUserInfo, create, update } = require("./user-helper");
 
 async function getUser (req, res) {
     const username = req.username;
+    logger.debug("getting user");
     await getUserInfo(username, (err, results) => {
       if (err) {
+        logger.error(err);
         return res.status(401).json({
           error: "authentication-failed",
         });
@@ -41,6 +44,8 @@ function getUserPub (req, res) {
 }
 
 function createUser (req, res) {
+  logger.debug("creating user");
+
     const newuser = req.body;
     if(!newuser.username) {
       res.status(400).json({ 

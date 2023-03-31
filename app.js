@@ -12,7 +12,6 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 const { deleteImg, getImgInfo } = require('./api/product-img-helper');
 const util = require('util');
-const fs = require('fs');
 require('dotenv').config();
 
 const Prometheus = require('prom-client');
@@ -24,19 +23,6 @@ const http_request_counter = new Prometheus.Counter({
 });
 register.registerMetric(http_request_counter);
 
-
-// Create a writable stream to the log file
-const logStream = fs.createWriteStream('/var/log/app.log', { flags: 'a' });
-
-// Log a message to the file
-const logger = (message) => {
-  logStream.write(`${new Date().toISOString()} - ${message}\n`);
-}
-
-// Close the stream when the application exits
-process.on('exit', () => {
-  logStream.end();
-});
 
 
 
@@ -106,7 +92,6 @@ app.get('/v1/product/:id/image/:imgid', getImage);
 app.delete('/v1/product/:id/image/:imgid', async (req, res) => {
     const imgId = req.params.imgid;
     const getImgInfoPromise = util.promisify(getImgInfo);
-    logger("Image being deleted, image id is: " + req.params.image_id);
     try{
         const img = await getImgInfoPromise(imgId);
         const { dataValues } = img;
@@ -137,6 +122,7 @@ app.delete('/v1/product/:id/image/:imgid', async (req, res) => {
       })
       return res.status(200).send({ message: 'Image deleted successfully' });
     }catch(err){
+
       console.error(err);
       return res.status(500).send({ message: 'Something went wrong' });
 
