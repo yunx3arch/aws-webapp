@@ -26,7 +26,7 @@ register.registerMetric(http_request_counter);
 
 
 // Create a writable stream to the log file
-const logStream = fs.createWriteStream('/var/log/webapp/app.log', { flags: 'a' });
+const logStream = fs.createWriteStream('/var/log/app.log', { flags: 'a' });
 
 // Log a message to the file
 const logger = (message) => {
