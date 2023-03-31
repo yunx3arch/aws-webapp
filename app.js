@@ -26,7 +26,7 @@ register.registerMetric(http_request_counter);
 
 
 // Create a writable stream to the log file
-const logStream = fs.createWriteStream('/var/log/webapp/csye6225.log', { flags: 'a' });
+const logStream = fs.createWriteStream('/var/log/webapp/app.log', { flags: 'a' });
 
 // Log a message to the file
 const logger = (message) => {
@@ -106,7 +106,7 @@ app.get('/v1/product/:id/image/:imgid', getImage);
 app.delete('/v1/product/:id/image/:imgid', async (req, res) => {
     const imgId = req.params.imgid;
     const getImgInfoPromise = util.promisify(getImgInfo);
-
+    logger("Image being deleted, image id is: " + req.params.image_id);
     try{
         const img = await getImgInfoPromise(imgId);
         const { dataValues } = img;
