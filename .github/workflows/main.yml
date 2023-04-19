@@ -12,7 +12,8 @@ on:
 
   pull_request:
     branches: [ main ]
-
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -23,13 +24,14 @@ jobs:
       - uses: actions/checkout@v2
 
       - name:  run test
-        run: 
+        id: run-test
+        run: |
           npm install
           npm run test
 
   packer:
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'push' 
 
     steps: 
       - name: Step 1 - Checkout code
@@ -45,8 +47,8 @@ jobs:
       - name: Step 3 - Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.DEV_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEV_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Step 4 - Packer Init
@@ -61,11 +63,61 @@ jobs:
           command: validate
           arguments: -syntax-only
           target: us-west-2.pkr.hcl
-
             
-      - name: Step 6 - Build
+      - name: Step 6 - Build AMI
         uses: hashicorp/packer-github-actions@master
         with:
           command: build
           arguments: "-color=false -on-error=abort"
           target: us-west-2.pkr.hcl
+    
+
+      - name: Create new Launch Template version
+        id: create-launch-template-version
+        run: |
+          latest_ami_id=$(aws ec2 describe-images \
+            --filters "Name=name,Values=csye6225_*" \
+            --query 'reverse(sort_by(Images, &CreationDate))[0].ImageId' \
+            --output text)
+          echo "lates ami id: $latest_ami_id"
+          latest_lt_name=$(aws ec2 describe-launch-templates \
+            --filters "Name=launch-template-name,Values=terraform-lc-example-*" \
+            --query 'LaunchTemplates[0].LaunchTemplateName' \
+            --output text)
+          echo "latest lt name: $latest_lt_name"
+          echo "latest_lt_name=$latest_lt_name" >> $GITHUB_OUTPUT   
+          latest_lt_version=$(aws ec2 describe-launch-templates \
+            --launch-template-names $latest_lt_name \
+            --query 'LaunchTemplates[*].LatestVersionNumber' \
+            --output text)
+          echo "latest lt version: $latest_lt_version"
+
+          aws ec2 create-launch-template-version\
+            --launch-template-name $latest_lt_name \
+            --version-description "updated" \
+            --source-version $latest_lt_version \
+            --launch-template-data '{"ImageId":"'${latest_ami_id}'"}'
+
+      - name: Update Autoscaling Group Launch Template
+        run: |
+          launch_template_version=$(aws ec2 describe-launch-templates \
+            --launch-template-names ${{ steps.create-launch-template-version.outputs.latest_lt_name }} \
+            --query 'LaunchTemplates[*].LatestVersionNumber' \
+            --output text)
+          echo "lt version: $launch_template_version"
+          launch_template_id=$(aws ec2 describe-launch-templates \
+            --filters "Name=launch-template-name,Values=terraform-lc-example-*" \
+            --query 'LaunchTemplates[0].LaunchTemplateId' \
+            --output text)
+          echo "lt id: $launch_template_id"
+
+          aws autoscaling update-auto-scaling-group \
+            --auto-scaling-group-name csye6225-asg-spring2023 \
+            --launch-template "LaunchTemplateId=$launch_template_id,Version=$launch_template_version"
+
+      - name: Refresh Autoscaling Group
+        run: |
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name csye6225-asg-spring2023 \
+            --preferences "MinHealthyPercentage=75"
+
