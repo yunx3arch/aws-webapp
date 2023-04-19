@@ -4,39 +4,15 @@ const bodyParser = require('body-parser');
 const { basicAuth } = require('./basic-auth');
 const { createProduct, getProduct, updateProductFull, updateProductPart, deleteProduct } = require('./api/products');
 const { createImage, getImage, deleteImage } = require('./api/product-img');
-const {
-    S3
-} = require("@aws-sdk/client-s3");
 
 const multer = require('multer');
 const multerS3 = require('multer-s3');
-const { deleteImg, getImgInfo } = require('./api/product-img-helper');
-const util = require('util');
 require('dotenv').config();
 
-const Prometheus = require('prom-client');
-const register = new Prometheus.Registry();
-const http_request_counter = new Prometheus.Counter({
-  name: 'myapp_http_request_count',
-  help: 'Count of HTTP requests made to my app',
-  labelNames: ['method', 'route', 'statusCode'],
-});
-register.registerMetric(http_request_counter);
+const s3 = require('./s3-config');
 
-
-
-
-const s3 = new S3({
-
-    region: process.env.REGION,
-    credentials: {
-
-      accessKeyId: process.env.AWS_ACCESS_KEY,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-
-    },
-    // region: "us-west-2",
-});
+const StatsD = require('statsd-client');
+const client = new StatsD();
 
 const jsonParser = bodyParser.json();
 
@@ -50,8 +26,7 @@ app.use(bodyParser.urlencoded({
 app.use((req, res, next) =>
 {
     // Increment the HTTP request counter
-    http_request_counter.labels({method: req.method, route: req.originalUrl, statusCode: res.statusCode}).inc();
-
+    client.increment({method: req.method, route: req.originalUrl, statusCode: res.statusCode});
     next();
 });
 
@@ -68,14 +43,13 @@ let upload = multer({
     storage: multerS3({
         s3: s3,
         acl: 'public-read',
-        bucket: process.env.S3_BUCKET_NAME,
-        // bucket: "my-s3-f6c5e73e-9212-77f7-eac5-443f52e2375a",
+        // bucket: process.env.S3_BUCKET_NAME,
+        bucket: "my-s3-174c36d7-8dea-340f-3006-589f351e9195",
         key: function (req, file, cb) {
           cb(null, Date.now().toString() + '-' + file.originalname);
         },
     })
 });
-
 
 app.post('/v1/user', jsonParser, createUser);
 app.post('/v1/product', jsonParser, createProduct);
@@ -89,44 +63,6 @@ app.delete('/v1/product/:id', deleteProduct);
 
 app.post('/v1/product/:id/image', upload.single('image'), createImage);
 app.get('/v1/product/:id/image/:imgid', getImage);
-app.delete('/v1/product/:id/image/:imgid', async (req, res) => {
-    const imgId = req.params.imgid;
-    const getImgInfoPromise = util.promisify(getImgInfo);
-    try{
-        const img = await getImgInfoPromise(imgId);
-        const { dataValues } = img;
-
-      console.log("imgkey", dataValues.image_key);
-
-      if (!img) {
-        return res.status(404).send({ message: 'Image not found' });
-      }
-      await s3.deleteObject({
-        Bucket: process.env.S3_BUCKET_NAME,
-        // Bucket: "my-s3-f4dfff7e-da2f-0ec9-6590-5d28c99f1bc3",
-        Key: dataValues.image_key,
-      });
-
-      await deleteImg(imgId, (err, results) => {
-        if (err) {
-          console.log(err);
-          return res.status(400).json({
-            error: "bad-request",
-          });
-        }
-        if (!results) {
-          return res.status(404).json({
-            error: "record-not-found",
-          });
-        }
-      })
-      return res.status(200).send({ message: 'Image deleted successfully' });
-    }catch(err){
-
-      console.error(err);
-      return res.status(500).send({ message: 'Something went wrong' });
-
-    }
-  });
+app.delete('/v1/product/:id/image/:imgid', deleteImage);
 
 app.listen(PORT, () => console.log(`http://localhost:${PORT}`));

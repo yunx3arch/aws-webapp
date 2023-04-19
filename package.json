@@ -25,6 +25,7 @@
     "prom-client": "^14.2.0",
     "save-dev": "0.0.1-security",
     "sequelize": "^6.11.0",
+    "statsd-client": "^0.4.7",
     "winston": "^3.8.2"
   },
   "scripts": {

@@ -1,7 +1,10 @@
 const crypto = require("crypto");
+const s3 = require("../s3-config");
 
 
 const { create, getImgInfo, deleteImg } = require("./product-img-helper");
+const util = require('util');
+require('dotenv').config();
 
 
 function createImage (req, res) {
@@ -52,41 +55,49 @@ function getImage(req, res) {
 
 }
 
-// function deleteImage(req, res){
-//       const imgId = req.params.imgid;
-//       const deleteParam = {
-//             Bucket: 'my-s3-26b626bb-699f-e6d5-6390-56e6407399f0',
-//             Delete: {
-//               Key: imgId
-//             }
-//       };
-//       console.log(s3);
-//       s3.deleteObject(deleteParam, (err, data) => {
-//             if (err) {
-//                   console.error(err);
-//                   res.status(500).send(err);
-//             } else {
-//                   console.log(data);
-//                   res.status(200).send('File deleted successfully');
-//             }
-//       });
-//       deleteImg(deleteParam, (err, results) => {
-//           if (err) {
-//             return res.status(400).json({
-//               error: "bad-request",
-//             });
-//           }
-//           if (!results) {
-//             return res.status(404).json({
-//               error: "record-not-found",
-//             });
-//           }
-//           return res.status(201).send(results);
-//         });
-// }
+async function deleteImage(req, res){
+  const imgId = req.params.imgid;
+  const getImgInfoPromise = util.promisify(getImgInfo);
+  try{
+      const img = await getImgInfoPromise(imgId);
+      const { dataValues } = img;
+
+    console.log("imgkey", dataValues.image_key);
+
+    if (!img) {
+      return res.status(404).send({ message: 'Image not found' });
+    }
+    console.log(dataValues.image_key)
+    await s3.deleteObject({
+      // Bucket: process.env.S3_BUCKET_NAME,
+      Bucket: "my-s3-174c36d7-8dea-340f-3006-589f351e9195",
+      Key: dataValues.image_key,
+    });
+
+    await deleteImg(imgId, (err, results) => {
+      if (err) {
+        console.log(err);
+        return res.status(400).json({
+          error: "bad-request",
+        });
+      }
+      if (!results) {
+        return res.status(404).json({
+          error: "record-not-found",
+        });
+      }
+    })
+    return res.status(200).send({ message: 'Image deleted successfully' });
+  }catch(err){
+
+    console.error(err);
+    return res.status(500).send({ message: 'Something went wrong' });
+
+  }
+}
 
 module.exports = {
       createImage,
       getImage,
-      // deleteImage
+      deleteImage
   }

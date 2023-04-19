@@ -2,7 +2,7 @@ const { genSaltSync, hashSync } = require("bcrypt");
 const crypto = require("crypto");
 const logger = require("../logger");
 const { getUserInfo, create, update } = require("./user-helper");
-
+console.log(logger);
 async function getUser (req, res) {
     const username = req.username;
     logger.debug("getting user");
