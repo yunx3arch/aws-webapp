@@ -1,7 +1,9 @@
 const {
       S3
   } = require("@aws-sdk/client-s3");
+  require('dotenv').config();
 
+console.log(process.env.REGION);
   const s3 = new S3({
 
       region: process.env.REGION,
@@ -15,5 +17,4 @@ const {
       },
       region: "us-west-2",
   });
-console.log(s3)
   module.exports = s3;
