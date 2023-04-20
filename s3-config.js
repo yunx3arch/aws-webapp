@@ -3,7 +3,7 @@ const {
   } = require("@aws-sdk/client-s3");
   require('dotenv').config();
 
-console.log(process.env.REGION);
+console.log('why', process.env.REGION);
   const s3 = new S3({
 
       region: process.env.REGION,

@@ -31,7 +31,7 @@ function getImgInfo (imgId, callBack) {
 function deleteImg (params, callBack) {
       Image_meta.destroy({
             where: {
-                image_id: params
+                image_id: params.Key
             }
         }).then(res => {
             if(res == 1){

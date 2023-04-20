@@ -7,9 +7,8 @@ const { createImage, getImage, deleteImage } = require('./api/product-img');
 
 const multer = require('multer');
 const multerS3 = require('multer-s3');
-require('dotenv').config();
-
 const s3 = require('./s3-config');
+require('dotenv').config();
 
 const StatsD = require('statsd-client');
 const client = new StatsD();
@@ -38,24 +37,24 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-console.log('bucket', process.env.S3_BUCKET_NAME)
-
 let upload = multer({
     fileFilter,
     storage: multerS3({
         s3: s3,
         acl: 'public-read',
         bucket: process.env.S3_BUCKET_NAME,
-        // bucket: "my-s3-174c36d7-8dea-340f-3006-589f351e9195",
         key: function (req, file, cb) {
           cb(null, Date.now().toString() + '-' + file.originalname);
         },
     })
 });
 
+
 app.post('/v1/user', jsonParser, createUser);
 app.post('/v1/product', jsonParser, createProduct);
 app.get('/healthz', getUserPub);
+// app.get('/health', getUserPub);
+
 app.get('/v1/user/:id', basicAuth, getUser).put('/v1/user/:id', jsonParser, updateUser);
 app.get('/v1/user', basicAuth, getUser);
 

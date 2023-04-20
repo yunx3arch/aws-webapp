@@ -23,7 +23,7 @@ source "amazon-ebs" "my-ami" {
   ami_description = "ami for csye6225 us-west-2"
   instance_type   = "t2.micro"
   region          = "${var.aws_region}"
-  ami_users       = ["931880155240"]
+  ami_users       = ["382300545992"]
   ami_regions = [
     "us-west-2",
   ]
@@ -36,7 +36,7 @@ source "amazon-ebs" "my-ami" {
   }
 
   launch_block_device_mappings {
-    device_name           = "/dev/sdf"
+    device_name           = "/dev/xvda"
     volume_size           = 50
     volume_type           = "gp2"
     delete_on_termination = true

@@ -2,7 +2,6 @@ const { genSaltSync, hashSync } = require("bcrypt");
 const crypto = require("crypto");
 const logger = require("../logger");
 const { getUserInfo, create, update } = require("./user-helper");
-console.log(logger);
 async function getUser (req, res) {
     const username = req.username;
     logger.debug("getting user");
@@ -25,22 +24,8 @@ async function getUser (req, res) {
 }
 
 function getUserPub (req, res) {
-  const username = req.query.username;
-  getUserInfo(username, (err, results) => {
-    if (err) {
-      return res.status(401).json({
-        error: "authentication-failed",
-      });
-    }
-    if (!results) {
-      return res.status(404).json({
-        error: "record-not-found",
-      });
-    }
-    const id = results.id;
-    console.log(id);
-    return res.send(results);
-  });
+      return res.status(204).send();
+ 
 }
 
 function createUser (req, res) {
@@ -68,6 +53,8 @@ function createUser (req, res) {
 
     create(newuser, (err, results) => {
       if (err) {
+        logger.error(err);
+
         if (err.name == 'SequelizeUniqueConstraintError') {
           return res.status(400).json({
             error: "username-exists",
@@ -97,6 +84,8 @@ function updateUser (req, res) {
   }
   update(req, (err, results) => {
     if (err) {
+      logger.error(err);
+
       return res.status(401).json({
         error: "authentication-failed",
       });

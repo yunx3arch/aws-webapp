@@ -1,21 +1,22 @@
 const crypto = require("crypto");
-const s3 = require("../s3-config");
 
 
 const { create, getImgInfo, deleteImg } = require("./product-img-helper");
-const util = require('util');
 require('dotenv').config();
-
+const util = require('util');
+const s3 = require("../s3-config");
+const logger = require("../logger");
 
 function createImage (req, res) {
-  
     const imgInfo = req.file;
+    logger.debug('creating image');
     if(!imgInfo) {
         res.status(400).json({ 
             error: 'file-required',
         });
         return;
     }
+
     const imgMeta = {
       image_id : crypto.randomBytes(6).toString("hex"),
       product_id : req.params.id,
@@ -27,7 +28,7 @@ function createImage (req, res) {
     
     create(imgMeta, (err, results) => {
       if (err) {
-            console.log(err);
+        logger.error(err);
         return res.status(400).json({
             error: "bad-request",
         });
@@ -40,7 +41,7 @@ function getImage(req, res) {
     const imageId = req.params.imgid;
     getImgInfo(imageId, (err, results) => {
       if (err) {
-            console.log(err);
+        logger.error(err);
         return res.status(401).json({
           error: "authentication-failed",
         });
@@ -67,16 +68,13 @@ async function deleteImage(req, res){
     if (!img) {
       return res.status(404).send({ message: 'Image not found' });
     }
-    console.log(dataValues.image_key)
     await s3.deleteObject({
-      // Bucket: process.env.S3_BUCKET_NAME,
-      Bucket: "my-s3-174c36d7-8dea-340f-3006-589f351e9195",
+      Bucket: process.env.S3_BUCKET_NAME,
       Key: dataValues.image_key,
     });
-
     await deleteImg(imgId, (err, results) => {
       if (err) {
-        console.log(err);
+        logger.error(err);
         return res.status(400).json({
           error: "bad-request",
         });
@@ -90,7 +88,7 @@ async function deleteImage(req, res){
     return res.status(200).send({ message: 'Image deleted successfully' });
   }catch(err){
 
-    console.error(err);
+    logger.error(err);
     return res.status(500).send({ message: 'Something went wrong' });
 
   }

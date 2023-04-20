@@ -5,6 +5,6 @@ const logger = winston.createLogger({
       format: winston.format.json(),
       transports: [ new winston.transports.File({ filename: 'app.log' })],
     });
-    logger.log("debug", "Logger working!");
+    logger.log("debug", "Logger working ok!");
 
     module.exports = logger;
