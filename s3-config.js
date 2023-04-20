@@ -1,11 +1,10 @@
 const {
       S3
   } = require("@aws-sdk/client-s3");
-  console.log(process.env.AWS_ACCESS_KEY_ID)
 
   const s3 = new S3({
 
-      // region: process.env.REGION,
+      region: process.env.REGION,
       credentials: {
   
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
