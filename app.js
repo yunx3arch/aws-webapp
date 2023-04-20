@@ -43,8 +43,8 @@ let upload = multer({
     storage: multerS3({
         s3: s3,
         acl: 'public-read',
-        // bucket: process.env.S3_BUCKET_NAME,
-        bucket: "my-s3-174c36d7-8dea-340f-3006-589f351e9195",
+        bucket: process.env.S3_BUCKET_NAME,
+        // bucket: "my-s3-174c36d7-8dea-340f-3006-589f351e9195",
         key: function (req, file, cb) {
           cb(null, Date.now().toString() + '-' + file.originalname);
         },
