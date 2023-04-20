@@ -48,12 +48,13 @@ let upload = multer({
         },
     })
 });
+console.log('upload', upload)
 
 
 app.post('/v1/user', jsonParser, createUser);
 app.post('/v1/product', jsonParser, createProduct);
 app.get('/healthz', getUserPub);
-// app.get('/health', getUserPub);
+app.get('/health', getUserPub);
 
 app.get('/v1/user/:id', basicAuth, getUser).put('/v1/user/:id', jsonParser, updateUser);
 app.get('/v1/user', basicAuth, getUser);
