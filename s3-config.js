@@ -1,7 +1,7 @@
 const {
       S3
   } = require("@aws-sdk/client-s3");
-  
+  console.log(process.env.AWS_ACCESS_KEY_ID)
 
   const s3 = new S3({
 
@@ -16,5 +16,5 @@ const {
       },
       region: "us-west-2",
   });
-
+console.log(s3)
   module.exports = s3;
