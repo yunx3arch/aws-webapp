@@ -31,7 +31,6 @@ jobs:
 
   packer:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' 
 
     steps: 
       - name: Step 1 - Checkout code
