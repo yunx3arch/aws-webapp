@@ -38,6 +38,8 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+console.log('bucket', process.env.S3_BUCKET_NAME)
+
 let upload = multer({
     fileFilter,
     storage: multerS3({
